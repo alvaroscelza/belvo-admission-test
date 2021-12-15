@@ -1,8 +1,10 @@
-Django
+Django==4.0
+djangorestframework==3.13.1
 
 # Tests and low level design
-pre-commit
-coverage
+pre-commit==2.16.0
+coverage==6.2
+factory-boy==3.2.1
 
 # Secrets
-python-dotenv
+python-dotenv==0.19.2
