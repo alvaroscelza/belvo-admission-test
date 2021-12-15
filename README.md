@@ -2,6 +2,9 @@
 
 Admission Test for Belvo Company
 
+Notes:
+- I am only using master branch because I'm the only developer (so this would be an SVN-like repository).
+
 ## Installation and running
 
 - Create virtual environment and activate it. Example: `virtualenv venv`
@@ -15,11 +18,6 @@ Admission Test for Belvo Company
 - `python manage.py migrate`
 - `python manage.py createsuperuser`
 - Run using `python manage.py runserver`
-
-## Re-generate translations
-
-- Run the following command to generate django.po file: `django-admin makemessages -l es --all --ignore venv --no-location`
-- Once all the translations are made, run the command: `django-admin compilemessages`
 
 ## Testing
 
