@@ -1,3 +1,5 @@
+from rest_framework import status
+from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
 from applications.core.models import UserTransaction
@@ -17,3 +19,37 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
                               'category': 'groceries', 'user_email': 'janedoe@email.com'}
         self.put_data = {'reference': '000051', 'date': '2020-01-13', 'amount': '100', 'type': 'outflow',
                          'category': 'groceries', 'user_email': 'janedoe@email.com'}
+
+    def test_create_bunch_ok(self):
+        url = reverse(self.list_url_name)
+        create_bulk_url = '{}create_bulk/'.format(url)
+        creation_bulk = [
+            {'reference': '000001', 'date': '2020-01-13', 'amount': '-51.13', 'type': 'outflow',
+             'category': 'groceries', 'user_email': 'janedoe@email.com'},
+            {'reference': '00002', 'date': '2020-01-13', 'amount': '100', 'type': 'inflow',
+             'category': 'groceries', 'user_email': 'janedoe@email.com'}
+        ]
+
+        self.response = self.client.post(create_bulk_url, creation_bulk, format='json', vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
+        all_transactions = UserTransaction.objects.all()
+        self.assertEqual(len(all_transactions), len(creation_bulk))
+
+    def test_inflow_negative_transaction_should_return_error(self):
+        self.creation_data['type'] = 'inflow'
+        url = reverse(self.list_url_name)
+
+        self.response = self.client.post(url, self.creation_data, format='json', vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(self.response.data[0]), 'All inflow transactions amounts are positive decimal numbers.')
+
+    def test_outflow_positive_transaction_should_return_error(self):
+        self.creation_data['amount'] = '100'
+        url = reverse(self.list_url_name)
+
+        self.response = self.client.post(url, self.creation_data, format='json', vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(self.response.data[0]), 'All outflow transactions amounts are negative decimal numbers.')
