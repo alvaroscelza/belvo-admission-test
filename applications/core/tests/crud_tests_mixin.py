@@ -2,14 +2,12 @@ from factory.django import DjangoModelFactory
 from rest_framework import status
 from rest_framework.reverse import reverse
 
-from applications.utils import UniqueNameMixin
-
 
 class CRUDTestsMixin:
     factory: DjangoModelFactory
     list_url_name: str
     detail_url_name: str
-    model: UniqueNameMixin
+    model = None
     creation_data: dict
     put_data: dict
     client = None
@@ -23,14 +21,6 @@ class CRUDTestsMixin:
 
         self.assertEqual(self.response.status_code, status.HTTP_201_CREATED)
 
-    def test_create_error_not_authenticated(self):
-        url = reverse(self.list_url_name)
-        self.client.logout()
-
-        self.response = self.client.post(url, self.creation_data, format='json')
-
-        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
-
     def test_delete_ok(self):
         existing_object = self.factory.create()
         url = reverse(self.detail_url_name, args=[existing_object.id])
@@ -41,14 +31,6 @@ class CRUDTestsMixin:
         result = self.model.objects.all()
         self.assertEqual(result.count(), 0)
 
-    def test_delete_error_not_authenticated(self):
-        url = reverse(self.detail_url_name, args=[1])
-        self.client.logout()
-
-        self.response = self.client.delete(url)
-
-        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
-
     def test_list_ok(self):
         url = reverse(self.list_url_name)
         self.factory.create_batch(2)
@@ -56,18 +38,7 @@ class CRUDTestsMixin:
         self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
 
         self.assertEqual(self.response.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.response.data['count'], 2)
-        self.assertEqual(self.response.data['next'], None)
-        self.assertEqual(self.response.data['previous'], None)
-        self.assertEqual(len(self.response.data['results']), 2)
-
-    def test_list_error_not_authenticated(self):
-        url = reverse(self.list_url_name)
-        self.client.logout()
-
-        self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
-
-        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(len(self.response.data), 2)
 
     def test_retrieve_ok(self):
         self.object_in_database = self.factory.create()
@@ -76,14 +47,6 @@ class CRUDTestsMixin:
         self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
 
         self.assertEqual(self.response.status_code, status.HTTP_200_OK)
-
-    def test_retrieve_error_not_authenticated(self):
-        url = reverse(self.detail_url_name, args=[1])
-        self.client.logout()
-
-        self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
-
-        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_put_ok(self):
         self.object_in_database = self.factory.create()
@@ -94,14 +57,6 @@ class CRUDTestsMixin:
         self.assertEqual(self.response.status_code, status.HTTP_200_OK)
         self.object_in_database = self.model.objects.get()
 
-    def test_put_error_not_authenticated(self):
-        url = reverse(self.detail_url_name, args=[1])
-        self.client.logout()
-
-        self.response = self.client.put(url, {}, format='json', vHTTP_ACCEPT='application/json')
-
-        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
-
     def test_patch_ok(self):
         self.object_in_database = self.factory.create()
         url = reverse(self.detail_url_name, args=[self.object_in_database.id])
@@ -110,26 +65,3 @@ class CRUDTestsMixin:
 
         self.assertEqual(self.response.status_code, status.HTTP_200_OK)
         self.object_in_database = self.model.objects.get()
-
-    def test_patch_error_not_authenticated(self):
-        url = reverse(self.detail_url_name, args=[1])
-        self.client.logout()
-
-        self.response = self.client.patch(url, {}, format='json', vHTTP_ACCEPT='application/json')
-
-        self.assertEqual(self.response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def list_filtering_tester(self, filtering_field, value_to_filter, is_nested_resource=False):
-        self.factory.create_batch(10)
-        self.factory.create_batch(5, **{filtering_field: value_to_filter})
-        value_to_filter = value_to_filter.pk if is_nested_resource else value_to_filter
-        url = reverse(self.list_url_name)
-        url = '{}?{}={}'.format(url, filtering_field, value_to_filter)
-
-        self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
-
-        self.assertEqual(self.response.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.response.data['count'], 5)
-        self.assertEqual(self.response.data['next'], None)
-        self.assertEqual(self.response.data['previous'], None)
-        self.assertEqual(len(self.response.data['results']), 5)
