@@ -69,7 +69,7 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
         for data in test_data:
             self.factory.create(**data)
         url = reverse(self.list_url_name)
-        url = '{}?group_by=type'.format(url)
+        url = '{}types_per_user/'.format(url)
 
         self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
 
@@ -86,7 +86,12 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
                 'total_outflow': '-51.13'
             }
         ]
-        self.assertEqual(self.response.data, expected_data)
+        self.assertEqual(self.response.data[0]['user_email'], expected_data[0]['user_email'])
+        self.assertEqual(float(self.response.data[0]['total_inflow']), float(expected_data[0]['total_inflow']))
+        self.assertEqual(float(self.response.data[0]['total_outflow']), float(expected_data[0]['total_outflow']))
+        self.assertEqual(self.response.data[1]['user_email'], expected_data[1]['user_email'])
+        self.assertEqual(float(self.response.data[1]['total_inflow']), float(expected_data[1]['total_inflow']))
+        self.assertEqual(float(self.response.data[1]['total_outflow']), float(expected_data[1]['total_outflow']))
 
     def test_user_summary(self):
         test_data = example_input
