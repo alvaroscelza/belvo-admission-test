@@ -9,7 +9,7 @@ class UserTransactionsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class TransactionsGroupedByTypesPerUserSerializer(serializers.Serializer):
+class UserTransactionsGroupedByTypesSerializer(serializers.Serializer):
     user_email = serializers.CharField()
     total_inflow = serializers.CharField()
     total_outflow = serializers.CharField()

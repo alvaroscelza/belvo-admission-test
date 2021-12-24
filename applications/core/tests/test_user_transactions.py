@@ -98,7 +98,7 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
         for data in test_data:
             self.factory.create(**data)
         url = reverse(self.list_url_name)
-        url = '{}/janedoe@email.com/summary'.format(url)
+        url = '{}user_summary/?user_email=janedoe@email.com'.format(url)
 
         self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
 
@@ -114,4 +114,18 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
                 'transfer': '-150.72'
             }
         }
-        self.assertEqual(self.response.data, expected_data)
+        self.assertEqual(float(self.response.data['inflow']['salary']), float(expected_data['inflow']['salary']))
+        self.assertEqual(float(self.response.data['inflow']['savings']), float(expected_data['inflow']['savings']))
+        self.assertEqual(float(self.response.data['outflow']['groceries']),
+                         float(expected_data['outflow']['groceries']))
+        self.assertEqual(float(self.response.data['outflow']['rent']), float(expected_data['outflow']['rent']))
+        self.assertEqual(float(self.response.data['outflow']['transfer']), float(expected_data['outflow']['transfer']))
+
+    def test_user_summary_error_missing_user_email(self):
+        url = reverse(self.list_url_name)
+        url = '{}user_summary/'.format(url)
+
+        self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.response.data, 'user_email is required.')
