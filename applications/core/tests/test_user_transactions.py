@@ -36,6 +36,15 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
         all_transactions = UserTransaction.objects.all()
         self.assertEqual(len(all_transactions), len(creation_bulk))
 
+    def test_create_duplicated_transaction_should_return_error(self):
+        self.factory.create(reference='000051')
+        url = reverse(self.list_url_name)
+
+        self.response = self.client.post(url, self.creation_data, format='json', vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(self.response.data['reference'][0]), 'Ya existe user transaction con este reference.')
+
     def test_inflow_negative_transaction_should_return_error(self):
         self.creation_data['type'] = 'inflow'
         url = reverse(self.list_url_name)
