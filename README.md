@@ -16,7 +16,6 @@ Notes:
   [Djecrety](https://djecrety.ir/), or any other token generator to generate Settings SECRET_KEY)
 - `python manage.py makemigrations`
 - `python manage.py migrate`
-- `python manage.py createsuperuser`
 - Run using `python manage.py runserver`
 
 ## Testing

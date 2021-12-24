@@ -5,12 +5,13 @@ from rest_framework.test import APITestCase
 from applications.core.models import UserTransaction
 from applications.core.tests.crud_tests_mixin import CRUDTestsMixin
 from applications.core.tests.factories.user_transactions_factories import UserTransactionsFactory
+from applications.core.tests.test_data import example_input
 
 
 class UserTransactionTests(CRUDTestsMixin, APITestCase):
     factory = UserTransactionsFactory
-    list_url_name = 'user_transactions-list'
-    detail_url_name = 'user_transactions-detail'
+    list_url_name = 'transactions-list'
+    detail_url_name = 'transactions-detail'
     model = UserTransaction
 
     def setUp(self):
@@ -62,3 +63,50 @@ class UserTransactionTests(CRUDTestsMixin, APITestCase):
 
         self.assertEqual(self.response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(str(self.response.data[0]), 'All outflow transactions amounts are negative decimal numbers.')
+
+    def test_total_inflow_and_outflow_per_user(self):
+        test_data = example_input
+        for data in test_data:
+            self.factory.create(**data)
+        url = reverse(self.list_url_name)
+        url = '{}?group_by=type'.format(url)
+
+        self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_200_OK)
+        expected_data = [
+            {
+                'user_email': 'janedoe@email.com',
+                'total_inflow': '2651.44',
+                'total_outflow': '-761.85'
+            },
+            {
+                'user_email': 'johndoe@email.com',
+                'total_inflow': '0.00',
+                'total_outflow': '-51.13'
+            }
+        ]
+        self.assertEqual(self.response.data, expected_data)
+
+    def test_user_summary(self):
+        test_data = example_input
+        for data in test_data:
+            self.factory.create(**data)
+        url = reverse(self.list_url_name)
+        url = '{}/janedoe@email.com/summary'.format(url)
+
+        self.response = self.client.get(url, vHTTP_ACCEPT='application/json')
+
+        self.assertEqual(self.response.status_code, status.HTTP_200_OK)
+        expected_data = {
+            'inflow': {
+                'salary': '2500.72',
+                'savings': '150.72'
+            },
+            'outflow': {
+                'groceries': '-51.13',
+                'rent': '-560.00',
+                'transfer': '-150.72'
+            }
+        }
+        self.assertEqual(self.response.data, expected_data)
