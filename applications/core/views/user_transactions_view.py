@@ -11,8 +11,8 @@ class UserTransactionsView(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def create_bulk(self, request, *args, **kwargs):
-        transactions_data = request.data.copy()
-        for transaction_data in transactions_data:
-            request.data = transaction_data
-            self.create(request, *args, **kwargs)
-        return Response(status=status.HTTP_201_CREATED)
+        serializer = UserTransactionsSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
