@@ -22,3 +22,6 @@ Notes:
 
 - Run the tests with `python manage.py test`
 - Get test coverage with `coverage run --source='.' manage.py test` and then `coverage report --skip-covered`
+
+## Docker
+A Dockerfile is provided to generate a container using python image.
